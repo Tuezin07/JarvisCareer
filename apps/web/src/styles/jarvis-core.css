@@ -1,0 +1,144 @@
+/* Núcleo do JARVIS (components/JarvisCore.tsx). Classes globais com prefixo jc-: o pipeline Tailwind do Turbopack não processa CSS Modules. */
+.jc-root {
+  --accent: var(--cyan);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  color: var(--accent);
+  transition: color 600ms ease;
+}
+
+.jc-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Todas as camadas giram em torno do centro do viewBox. */
+.jc-spin,
+.jc-spin-rev,
+.jc-breathe,
+.jc-sweep,
+.jc-orbit {
+  transform-box: view-box;
+  transform-origin: 0 0; /* viewBox centrado em (0,0): a caixa view-box começa na origem */
+}
+.jc-spin {
+  animation: jc-spin var(--d, 60s) linear infinite;
+}
+.jc-spin-rev {
+  animation: jc-spin var(--d, 60s) linear infinite reverse;
+}
+.jc-sweep {
+  animation: jc-spin 3.2s linear infinite;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.jc-orbit {
+  animation: jc-spin 5s linear infinite;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.jc-breathe {
+  animation: jc-breathe 4.2s ease-in-out infinite;
+}
+
+.jc-root[data-sweep="true"] .jc-sweep {
+  opacity: 1;
+}
+.jc-root[data-orbit="true"] .jc-orbit {
+  opacity: 1;
+}
+
+/* Barras radiais: equalizador no estado "listening" (amplitude real do microfone na Fase 7). */
+.jc-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transform: scaleY(0.35);
+  transition: transform 400ms ease;
+}
+.jc-root[data-state="listening"] .jc-bar {
+  animation: jc-eq 0.9s ease-in-out infinite alternate;
+}
+.jc-root[data-state="executing"] .jc-bar,
+.jc-root[data-state="thinking"] .jc-bar {
+  transform: scaleY(0.7);
+}
+
+.jc-approval {
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.jc-root[data-state="waiting_approval"] .jc-approval {
+  opacity: 1;
+  animation: jc-blink 1.6s ease-in-out infinite;
+}
+
+.jc-root[data-state="error"] .jc-svg {
+  animation: jc-jitter 0.35s steps(2) 3;
+}
+
+/* Onda de choque: dispara a cada evento recebido e ao concluir. */
+.jc-shock {
+  transform-box: view-box;
+  transform-origin: 0 0; /* viewBox centrado em (0,0): a caixa view-box começa na origem */
+  animation: jc-shock 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes jc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes jc-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.07);
+    opacity: 1;
+  }
+}
+@keyframes jc-eq {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes jc-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes jc-jitter {
+  50% {
+    transform: translate(1.5px, -1px);
+  }
+}
+@keyframes jc-shock {
+  from {
+    transform: scale(0.35);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.08);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jc-spin,
+  .jc-spin-rev,
+  .jc-sweep,
+  .jc-orbit,
+  .jc-breathe,
+  .jc-bar,
+  .jc-shock,
+  .jc-approval {
+    animation: none !important;
+  }
+}

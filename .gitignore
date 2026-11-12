@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Segredos e dados locais
+.env
+.env.*
+!.env.example
+apps/api/storage/
+apps/api/src/generated/
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+storage-test/
+.claude/settings.local.json

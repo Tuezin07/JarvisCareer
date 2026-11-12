@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/*
+ * Identidade JARVIS Career — HUD holográfico proprietário.
+ * O produto é escuro por design; o contraste de texto segue WCAG AA.
+ */
+:root {
+  --bg: #03070d;
+  --bg-2: #060d16;
+  --panel: rgba(8, 20, 33, 0.66);
+  --panel-solid: #08131f;
+  --line: rgba(53, 225, 255, 0.14);
+  --line-strong: rgba(53, 225, 255, 0.4);
+  --text: #d8f3ff;
+  --text-dim: #8fb0c4;
+  --text-faint: #56778a;
+  --cyan: #35e1ff;
+  --blue: #1f8bff;
+  --amber: #ffb547;
+  --red: #ff5d6c;
+  --green: #3dffb0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--text);
+  --color-ink-dim: var(--text-dim);
+  --color-ink-faint: var(--text-faint);
+  --color-cyan: var(--cyan);
+  --color-blue: var(--blue);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-green: var(--green);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-chakra);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  /* Grade técnica + brilho central: dá profundidade sem competir com o conteúdo. */
+  background-image:
+    radial-gradient(ellipse 70% 55% at 50% 38%, rgba(31, 139, 255, 0.13), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 85% 90%, rgba(53, 225, 255, 0.06), transparent 70%),
+    linear-gradient(rgba(53, 225, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(53, 225, 255, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(53, 225, 255, 0.3);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* Painel holográfico com cantos marcados. */
+.hud-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(12, 30, 48, 0.72), rgba(6, 15, 25, 0.66));
+  border: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+}
+.hud-panel::before,
+.hud-panel::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--line-strong);
+  border-style: solid;
+  pointer-events: none;
+}
+.hud-panel::before {
+  top: -1px;
+  left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.hud-panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+.hud-label {
+  font-family: var(--font-chakra), var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.hud-title {
+  font-family: var(--font-chakra), sans-serif;
+  letter-spacing: 0.06em;
+}
+
+.hud-input {
+  width: 100%;
+  background: rgba(3, 10, 18, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.hud-input::placeholder {
+  color: var(--text-faint);
+}
+.hud-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(53, 225, 255, 0.12);
+}
+
+.hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-chakra), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.78rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 3px;
+  border: 1px solid var(--cyan);
+  color: var(--bg);
+  background: var(--cyan);
+  transition: transform 120ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+.hud-btn:hover:not(:disabled) {
+  box-shadow: 0 0 22px rgba(53, 225, 255, 0.35);
+}
+.hud-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.hud-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.hud-btn-ghost {
+  background: transparent;
+  color: var(--cyan);
+  border-color: var(--line-strong);
+}
+.hud-btn-danger {
+  background: transparent;
+  color: var(--red);
+  border-color: rgba(255, 93, 108, 0.5);
+}
+
+/* Linha de varredura nos painéis ativos. */
+@keyframes hud-scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes hud-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hud-enter {
+  animation: hud-fade-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
