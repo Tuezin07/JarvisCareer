@@ -30,7 +30,7 @@ Depois, reinicie o app/sessão do Claude Code e confirme com `/mcp`.
 | Prisma ORM 7.10 + `@prisma/adapter-pg` | ORM | Acesso tipado, migrações | `DATABASE_URL` | 1 | Testado (e2e) |
 | Redis 7.4 + BullMQ 6 | Filas | Jobs, estado do núcleo (pub/sub) | `REDIS_URL` | 1 | Testado (e2e) |
 | Armazenamento de arquivos | Storage | Currículos, evidências | `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR` | 1 | Driver local implementado; driver S3 planejado |
-| Anthropic API (`@anthropic-ai/sdk`) | LLM | Cérebro, análise, computer use | `ANTHROPIC_API_KEY` | 2 | Planejado — requer chave |
+| Anthropic API (`@anthropic-ai/sdk` 1.8) | LLM | Chat com ferramentas, análise de currículo (computer use na Fase 6) | `ANTHROPIC_API_KEY`, `LLM_MODEL_PRIMARY`, `LLM_DAILY_BUDGET_USD` | 2 | Implementado; testado com provedor falso; chamada real chegou à API e foi recusada por **falta de créditos na conta** |
 | Greenhouse / Lever / Ashby (leitura) | APIs públicas | Descoberta de vagas | — | 3 | Planejado |
 | Playwright | Navegador | Executor determinístico | — | 4 | Planejado |
 | Stagehand / Browserbase | Navegador adaptativo/remoto | Executor adaptativo | `BROWSERBASE_API_KEY`, `BROWSERBASE_PROJECT_ID` | 4 | Planejado — requer conta |

@@ -1,4 +1,4 @@
-// JARVIS Career — modelo de dados da Fase 1 (fundação).
+// JARVIS Career — modelo de dados (Fases 1 e 2).
 // Tabelas das fases seguintes (vagas, candidaturas, automação) entram com suas migrações,
 // quando o código que as usa existir. Visão completa em docs/01-arquitetura.md.
 //
@@ -40,6 +40,11 @@ model User {
   consents      Consent[]
   events        AgentEvent[]
   tasks         AgentTask[]
+  conversations Conversation[]
+  memories      AgentMemory[]
+  actions       ActionExecution[]
+  usage         UsageRecord[]
+  analyses      ResumeAnalysis[]
 }
 
 /// Refresh token opaco. Guardamos só o hash; a família permite revogar tudo em caso de reuso.
@@ -222,7 +227,8 @@ model Resume {
   createdAt     DateTime     @default(now())
   extractedAt   DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses ResumeAnalysis[]
 
   @@unique([userId, sha256])
   @@index([userId, createdAt])
@@ -287,17 +293,17 @@ enum TaskStatus {
 
 /// Cada job de fundo relevante para o candidato, com limites e resultado.
 model AgentTask {
-  id          String     @id @default(uuid()) @db.Uuid
-  userId      String     @db.Uuid
-  kind        String
-  status      TaskStatus @default(QUEUED)
+  id         String     @id @default(uuid()) @db.Uuid
+  userId     String     @db.Uuid
+  kind       String
+  status     TaskStatus @default(QUEUED)
   /// Job do BullMQ (idempotência: mesmo jobId não é enfileirado duas vezes).
-  queueJobId  String     @unique
-  attempts    Int        @default(0)
-  error       String?
-  createdAt   DateTime   @default(now())
-  startedAt   DateTime?
-  finishedAt  DateTime?
+  queueJobId String     @unique
+  attempts   Int        @default(0)
+  error      String?
+  createdAt  DateTime   @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
 
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   events AgentEvent[]
@@ -319,4 +325,163 @@ model AuditLog {
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
+}
+
+// ───────────────────────────── Fase 2 — Inteligência ─────────────────────────────
+
+model Conversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+  actions  ActionExecution[]
+
+  @@index([userId, updatedAt])
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+enum MessageKind {
+  /// Texto digitado pelo candidato.
+  USER_TEXT
+  /// Resposta do modelo (pode conter texto, thinking e tool_use).
+  ASSISTANT
+  /// Resultados das ferramentas executadas pelo backend.
+  TOOL_RESULTS
+}
+
+/// Histórico append-only. `content` guarda os blocos exatamente como trocados com a API:
+/// blocos de thinking precisam voltar intactos nas chamadas seguintes.
+model Message {
+  id             String      @id @default(uuid()) @db.Uuid
+  conversationId String      @db.Uuid
+  userId         String      @db.Uuid
+  seq            Int
+  role           MessageRole
+  kind           MessageKind
+  content        Json
+  /// Texto exibível na interface (null quando a mensagem só tem tool_result).
+  displayText    String?
+  model          String?
+  stopReason     String?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, seq])
+  @@index([userId, createdAt])
+}
+
+enum ActionRisk {
+  READ_ONLY
+  REVERSIBLE
+  EXTERNAL_STATE
+  IRREVERSIBLE
+}
+
+enum ActionStatus {
+  SUCCEEDED
+  FAILED
+  DENIED
+}
+
+/// Cada ferramenta que o agente pediu para executar, com a decisão do Action Router.
+model ActionExecution {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @db.Uuid
+  conversationId String?      @db.Uuid
+  toolUseId      String?
+  toolName       String
+  risk           ActionRisk
+  status         ActionStatus
+  /// Entrada validada (sem textos longos de documentos).
+  input          Json?
+  /// Resumo legível do resultado, exibido na interface.
+  summary        String?
+  error          String?
+  durationMs     Int
+  createdAt      DateTime     @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([conversationId])
+}
+
+enum MemoryKind {
+  FACT
+  PREFERENCE
+  GOAL
+  DECISION
+}
+
+/// Memória estruturada do candidato. Recuperada por tipo e recência (sem embeddings por enquanto).
+model AgentMemory {
+  id         String     @id @default(uuid()) @db.Uuid
+  userId     String     @db.Uuid
+  kind       MemoryKind
+  content    String
+  /// Origem: CONVERSATION, RESUME, PROFILE.
+  source     String
+  sourceRef  String?
+  createdAt  DateTime   @default(now())
+  archivedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, archivedAt, createdAt])
+}
+
+/// Consumo de LLM por chamada. Custo em micro-dólares (1 USD = 1_000_000).
+model UsageRecord {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  route            String
+  model            String
+  inputTokens      Int
+  outputTokens     Int
+  cacheReadTokens  Int      @default(0)
+  cacheWriteTokens Int      @default(0)
+  costMicroUsd     Int
+  conversationId   String?  @db.Uuid
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model ResumeAnalysis {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @db.Uuid
+  resumeId    String         @db.Uuid
+  status      AnalysisStatus @default(QUEUED)
+  model       String?
+  /// Nota de qualidade documental 0–100, calculada no backend a partir dos critérios.
+  score       Int?
+  result      Json?
+  error       String?
+  createdAt   DateTime       @default(now())
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId, createdAt])
+  @@index([userId, createdAt])
 }

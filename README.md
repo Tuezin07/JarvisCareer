@@ -2,7 +2,7 @@
 
 Inteligência artificial de recolocação profissional: conhece o candidato, lê seus currículos, pesquisa vagas em fontes autorizadas, calcula compatibilidade, prepara candidaturas e prova, com evidências, tudo o que fez.
 
-> Estado atual: **Fase 1 (fundação) entregue e testada.** Conversa por IA, pesquisa de vagas, automação de navegador/desktop, candidaturas e voz são as próximas fases — ver [status por funcionalidade](docs/05-plano-e-status.md).
+> Estado atual: **Fase 1 (fundação) e núcleo da Fase 2 (conversa com ferramentas, memória, análise de currículo) implementados e testados.** Pesquisa de vagas, automação de navegador/desktop, candidaturas e voz são as próximas fases — ver [status por funcionalidade](docs/05-plano-e-status.md).
 
 ## Requisitos
 
@@ -35,7 +35,7 @@ npm run dev:worker
 npm run dev:web
 ```
 
-Acesse http://localhost:3000, crie uma conta e envie um currículo (PDF, DOCX ou TXT).
+Acesse http://localhost:3000, crie uma conta e envie um currículo (PDF, DOCX ou TXT). Para a conversa e a análise por IA, defina `ANTHROPIC_API_KEY` em `apps/api/.env` (a conta precisa ter créditos).
 
 ## Testes
 

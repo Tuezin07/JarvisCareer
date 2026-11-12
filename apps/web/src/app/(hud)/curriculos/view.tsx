@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RESUME_MAX_BYTES, type ResumeDetailDto, type ResumeDto, type ResumeStatus } from "@jarvis/shared";
+import {
+  RESUME_MAX_BYTES,
+  type ResumeAnalysisDto,
+  type ResumeDetailDto,
+  type ResumeDto,
+  type ResumeStatus,
+} from "@jarvis/shared";
+import { AnalysisReport } from "@/components/AnalysisReport";
 import { ErrorNote, Panel, useNow } from "@/components/hud";
 import { useAgentEvent } from "@/lib/agent-context";
 import { ApiError, api, formatBytes, timeAgo } from "@/lib/api";
@@ -16,6 +23,8 @@ const STATUS: Record<ResumeStatus, { text: string; color: string }> = {
 export default function ResumesPage() {
   const [items, setItems] = useState<ResumeDto[] | null>(null);
   const [selected, setSelected] = useState<ResumeDetailDto | null>(null);
+  const [analysis, setAnalysis] = useState<ResumeAnalysisDto | null>(null);
+  const [tab, setTab] = useState<"analysis" | "text">("analysis");
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -29,17 +38,28 @@ export default function ResumesPage() {
     // Mantém o painel de texto coerente com a lista (atualizado ou fechado se o item sumiu).
     const id = selectedId.current;
     if (id && list.some((r) => r.id === id)) {
-      setSelected(await api<ResumeDetailDto>(`/resumes/${id}`));
+      const [detail, latest] = await Promise.all([
+        api<ResumeDetailDto>(`/resumes/${id}`),
+        api<ResumeAnalysisDto | null>(`/resumes/${id}/analysis`),
+      ]);
+      setSelected(detail);
+      setAnalysis(latest);
     } else if (id) {
       selectedId.current = null;
       setSelected(null);
+      setAnalysis(null);
     }
     return list;
   }, []);
 
   const open = useCallback(async (id: string) => {
     selectedId.current = id;
-    setSelected(await api<ResumeDetailDto>(`/resumes/${id}`));
+    const [detail, latest] = await Promise.all([
+      api<ResumeDetailDto>(`/resumes/${id}`),
+      api<ResumeAnalysisDto | null>(`/resumes/${id}/analysis`),
+    ]);
+    setSelected(detail);
+    setAnalysis(latest);
   }, []);
 
   useEffect(() => {
@@ -134,8 +154,8 @@ export default function ResumesPage() {
           ) : (
             <ul className="divide-y divide-line">
               {items.map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
-                  <button onClick={() => void open(r.id)} className="min-w-0 flex-1 text-left">
+                <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
+                  <button onClick={() => void open(r.id)} className="min-w-0 flex-1 basis-56 text-left">
                     <span className="flex items-center gap-2">
                       <span className="truncate font-medium text-ink hover:text-cyan">{r.originalName}</span>
                       {r.isPrimary && (
@@ -155,10 +175,24 @@ export default function ResumesPage() {
                     />
                     {STATUS[r.status].text}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex w-full flex-wrap gap-2">
                     {!r.isPrimary && (
                       <button className="hud-btn hud-btn-ghost !px-2.5 !py-1" onClick={() => act(() => api(`/resumes/${r.id}/primary`, { method: "POST" }))}>
                         Principal
+                      </button>
+                    )}
+                    {r.status === "EXTRACTED" && (
+                      <button
+                        className="hud-btn !px-2.5 !py-1"
+                        onClick={() =>
+                          act(async () => {
+                            await api(`/resumes/${r.id}/analysis`, { method: "POST" });
+                            setTab("analysis");
+                            await open(r.id);
+                          })
+                        }
+                      >
+                        Analisar com IA
                       </button>
                     )}
                     {r.status === "FAILED" && (
@@ -185,8 +219,42 @@ export default function ResumesPage() {
         </Panel>
       </div>
 
-      <Panel title="Texto extraído" code="TXT-RAW" className="lg:sticky lg:top-20 lg:self-start">
-        {selected ? (
+      <Panel
+        title={tab === "analysis" ? "Análise por IA" : "Texto extraído"}
+        code={tab === "analysis" ? "ANL-01" : "TXT-RAW"}
+        className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto"
+        action={
+          selected && (
+            <div className="flex gap-1" role="tablist">
+              {(["analysis", "text"] as const).map((t) => (
+                <button
+                  key={t}
+                  role="tab"
+                  aria-selected={tab === t}
+                  onClick={() => setTab(t)}
+                  className={`rounded-sm px-2 py-0.5 text-xs ${tab === t ? "bg-cyan/15 text-cyan" : "text-ink-dim hover:text-ink"}`}
+                >
+                  {t === "analysis" ? "Análise" : "Texto"}
+                </button>
+              ))}
+            </div>
+          )
+        }
+      >
+        {!selected ? (
+          <p className="text-sm text-ink-faint">Selecione um currículo para ver a análise e o que o JARVIS leu.</p>
+        ) : tab === "analysis" ? (
+          <>
+            <p className="mb-3 text-sm text-ink">{selected.originalName}</p>
+            {analysis ? (
+              <AnalysisReport analysis={analysis} />
+            ) : (
+              <p className="text-sm text-ink-faint">
+                Ainda não analisado. {selected.status === "EXTRACTED" ? "Use “Analisar com IA” na lista." : "Aguarde a leitura terminar."}
+              </p>
+            )}
+          </>
+        ) : (
           <>
             <p className="mb-3 text-sm text-ink">{selected.originalName}</p>
             {selected.extractedText ? (
@@ -196,12 +264,8 @@ export default function ResumesPage() {
             ) : (
               <p className="text-sm text-ink-faint">Ainda sem texto extraído ({STATUS[selected.status].text.toLowerCase()}).</p>
             )}
-            <p className="mt-3 text-xs text-ink-faint">
-              Esta é a leitura literal do documento. A análise com diagnóstico e pontuação chega na Fase 2.
-            </p>
+            <p className="mt-3 text-xs text-ink-faint">Leitura literal do documento, sem interpretação.</p>
           </>
-        ) : (
-          <p className="text-sm text-ink-faint">Selecione um currículo para ver o que o JARVIS leu.</p>
         )}
       </Panel>
     </div>

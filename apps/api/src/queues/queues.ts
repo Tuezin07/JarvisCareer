@@ -2,11 +2,19 @@ import type { DefaultJobOptions } from 'bullmq';
 
 export const QUEUES = {
   resume: 'resume',
+  analysis: 'analysis',
 } as const;
 
 export interface ResumeExtractJob {
   userId: string;
   resumeId: string;
+  taskId: string;
+}
+
+export interface ResumeAnalysisJob {
+  userId: string;
+  resumeId: string;
+  analysisId: string;
   taskId: string;
 }
 

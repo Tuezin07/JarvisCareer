@@ -17,11 +17,11 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: "/painel", label: "Comando", code: "CMD" },
+  { href: "/conversa", label: "Conversa", code: "CHT" },
   { href: "/perfil", label: "Perfil", code: "PRF" },
   { href: "/curriculos", label: "Currículos", code: "CVS" },
   { href: "/atividade", label: "Atividade", code: "LOG" },
   { href: "/privacidade", label: "Privacidade", code: "SEC" },
-  { href: "#", label: "Conversa", code: "CHT", phase: 2 },
   { href: "#", label: "Vagas", code: "JOB", phase: 3 },
   { href: "#", label: "Navegador", code: "WEB", phase: 4 },
   { href: "#", label: "Candidaturas", code: "APP", phase: 5 },

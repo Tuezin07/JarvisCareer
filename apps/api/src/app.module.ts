@@ -10,6 +10,7 @@ import { ActivityModule } from './modules/activity/activity.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { DashboardController } from './modules/dashboard/dashboard.controller.js';
 import { HealthController } from './modules/health/health.controller.js';
+import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
 import { PrivacyController } from './modules/privacy/privacy.controller.js';
 import { PrivacyService } from './modules/privacy/privacy.service.js';
 import { ProfileModule } from './modules/profile/profile.module.js';
@@ -46,6 +47,7 @@ export const bullRoot = BullModule.forRootAsync({
     ActivityModule,
     ProfileModule,
     ResumesModule,
+    IntelligenceModule,
   ],
   controllers: [HealthController, DashboardController, PrivacyController],
   providers: [

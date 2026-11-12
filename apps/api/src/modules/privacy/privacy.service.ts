@@ -66,6 +66,18 @@ export class PrivacyService {
         consents: { omit: { userId: true } },
         events: { orderBy: { createdAt: 'desc' }, omit: { userId: true } },
         tasks: { omit: { userId: true } },
+        conversations: {
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+            messages: { orderBy: { seq: 'asc' }, select: { role: true, kind: true, displayText: true, createdAt: true } },
+          },
+        },
+        memories: { omit: { userId: true } },
+        analyses: { omit: { userId: true } },
+        actions: { omit: { userId: true } },
+        usage: { omit: { userId: true } },
       },
     });
     await this.audit.log('privacy.export', { userId, meta });

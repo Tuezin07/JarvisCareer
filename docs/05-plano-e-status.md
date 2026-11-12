@@ -33,11 +33,32 @@ Diagnóstico, arquitetura, estratégias, segurança/LGPD, custos, matriz de plat
 
 **Totais:** 37 testes automatizados (7 contratos, 18 unitários da API, 12 e2e com Postgres/Redis reais).
 
+## Fase 2 — Inteligência (2026-11-12)
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| `LlmProvider` + `AnthropicProvider` (Opus 5.5, thinking adaptativo, `effort`, streaming, fallback de recusa no servidor, cache de prompt) | Implementada | tipos verificados contra o SDK 1.8; chamada real chegou à API (recusada: conta sem créditos) |
+| Chat com streaming (POST → text/event-stream), histórico append-only, conversas por candidato | Testada | e2e "responde usando dados reais…", tela `/conversa` verificada no navegador |
+| Action Router: validação Zod, política por risco, limite diário, timeout, `ActionExecution`, auditoria | Testada | e2e "entrada inválida e ferramenta inexistente…", "atualiza preferências…" |
+| Ferramentas: perfil, estatísticas, histórico de atividades, currículos (lista, texto, análise), análise sob demanda, preferências, pausar/retomar, memória (guardar, consultar, esquecer) | Testada (via provedor falso) | e2e de conversa; `get_activity_history`, `update_candidate_preferences`, `save_memory` exercitadas |
+| Memória estruturada (`AgentMemory`) | Testada | e2e "guarda e recupera memórias" |
+| Custo por chamada (`UsageRecord`) e orçamento de 24 h por candidato | Testada | unitários `costMicroUsd`; e2e "orçamento diário estourado…" (429) |
+| Uma resposta por vez por conversa (lock no Redis) | Testada | e2e "uma resposta por vez…" |
+| Análise de currículo no worker com saída estruturada e nota determinística por 6 critérios públicos | Testada (via provedor falso) | e2e "worker analisa com o provedor…" (nota 60 conferida pelos pesos) |
+| Relatório de análise na interface | Implementada | verificado no navegador com dado de teste rotulado (removido em seguida) |
+| Mensagens de erro do provedor sem vazar detalhes | Testada | interface mostra aviso de créditos; e2e de 503 sem chave |
+| **Respostas reais do modelo** | **Bloqueada** | conta Anthropic sem créditos — adicionar créditos e repetir o teste real |
+| Variantes de currículo por área (`generate_resume_variant`), carta de apresentação | Planejada | próxima entrega da Fase 2 |
+| Extração do perfil a partir do currículo com confirmação do candidato | Planejada | próxima entrega da Fase 2 |
+| Compactação de conversas longas | Planejada | ADR-0008 |
+
+**Totais:** 55 testes automatizados (7 contratos, 25 unitários, 23 e2e com Postgres/Redis reais).
+
 ## Próximas fases
 
 | Fase | Entrega | Depende de |
 |---|---|---|
-| 2 — Inteligência | `LlmProvider` (Anthropic SDK), chat com streaming e histórico, ferramentas tipadas com Action Router, memória estruturada, análise de currículo com saída estruturada e pontuação explicada, variantes de currículo sem invenção, `UsageRecord` + orçamento por candidato | **`ANTHROPIC_API_KEY`** |
+| 2b — Inteligência (restante) | Variantes de currículo sem invenção, carta de apresentação, extração de perfil a partir do currículo com confirmação | créditos na conta Anthropic |
 | 3 — Pesquisa | Conectores oficiais Greenhouse/Lever/Ashby (leitura), normalização, deduplicação, motor de compatibilidade com pesos configuráveis, detecção de fraude, vaga por link colado | lista de empresas/board tokens |
 | 4 — JARVIS WEB | `apps/automation` isolado, Playwright + Stagehand, allowlist, evidências (screenshots com retenção), sessões por candidato | conta Browserbase (opcional) |
 | 5 — Candidaturas | Estados completos, modos assistido/semiautônomo/autônomo com limites, nível D por padrão | revisão de termos por plataforma |

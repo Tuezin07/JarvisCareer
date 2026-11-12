@@ -42,6 +42,14 @@ Postgres do projeto usa a porta **5433** (a máquina tem um Postgres nativo na 5
 - SVG do núcleo: viewBox centrado em (0,0) → `transform-box: view-box; transform-origin: 0 0`. Não combine `filter` e transform CSS no mesmo elemento. Arredonde coordenadas trigonométricas (hidratação).
 - Comentários em português, curtos, explicando o porquê.
 
+## Intelligence Core (Fase 2) — ver ADR-0008
+
+- Chamadas ao modelo só via `LLM_PROVIDER` (`modules/intelligence/llm/`). Testes usam `test/fake-llm.provider.ts` (`createApi(fake)` / `createWorker(fake)`) — **testes automatizados nunca chamam a API real**.
+- Nova ferramenta: adicionar em `CareerToolsService.tools()` com schema Zod, `risk`, `label` e `dailyLimit` quando tiver custo. O `userId` vem do contexto, nunca da entrada do modelo. Não exponha ferramenta de capacidade que não existe.
+- `Message.content` é append-only: nunca edite nem reordene mensagens já gravadas (thinking blocks ficam inválidos).
+- Opus 5.5: não envie `thinking: disabled`, `budget_tokens` nem `tool_choice` forçado (400). Profundidade por `output_config.effort`.
+- Erros para o candidato passam por `publicLlmErrorMessage()`; nunca exponha o corpo de erro do provedor.
+
 ## MCPs de desenvolvimento
 
 `.mcp.json` (escopo de projeto): `playwright` (`@playwright/mcp`) e `browserbase` (HTTP, lê `BROWSERBASE_API_KEY` do ambiente). São ferramentas do Claude Code, **não** do produto — capacidades do JARVIS em produção são implementadas no backend com contrato, permissão e testes ([docs/integracoes.md](docs/integracoes.md)).

@@ -11,6 +11,12 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   STORAGE_DRIVER: z.enum(['local']).default('local'),
   STORAGE_LOCAL_DIR: z.string().min(1).default('./storage'),
+  // Fase 2 — sem chave, as rotas de IA respondem 503 com mensagem clara.
+  ANTHROPIC_API_KEY: z.string().optional().transform((v) => (v ? v : undefined)),
+  LLM_MODEL_PRIMARY: z.string().min(1).default('claude-opus-5-5'),
+  LLM_MODEL_BULK: z.string().min(1).default('claude-opus-5-5'),
+  /** Teto de gasto com LLM por candidato numa janela móvel de 24 h. */
+  LLM_DAILY_BUDGET_USD: z.coerce.number().positive().default(2),
 });
 
 export type Env = z.infer<typeof envSchema>;

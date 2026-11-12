@@ -199,3 +199,58 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Texto das respostas do JARVIS (markdown). */
+.prose-jarvis > * + * {
+  margin-top: 0.7em;
+}
+.prose-jarvis ul,
+.prose-jarvis ol {
+  padding-left: 1.3em;
+}
+.prose-jarvis ul {
+  list-style: none;
+}
+.prose-jarvis ul > li {
+  position: relative;
+}
+.prose-jarvis ul > li::before {
+  content: "";
+  position: absolute;
+  left: -0.95em;
+  top: 0.65em;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--cyan);
+}
+.prose-jarvis ol {
+  list-style: decimal;
+}
+.prose-jarvis li + li {
+  margin-top: 0.3em;
+}
+.prose-jarvis strong {
+  color: #fff;
+  font-weight: 600;
+}
+.prose-jarvis code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.88em;
+  background: rgba(53, 225, 255, 0.08);
+  border: 1px solid var(--line);
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+}
+.prose-jarvis h1,
+.prose-jarvis h2,
+.prose-jarvis h3 {
+  font-family: var(--font-chakra), sans-serif;
+  letter-spacing: 0.04em;
+  color: #fff;
+  font-weight: 600;
+}
+.prose-jarvis a {
+  color: var(--cyan);
+  text-decoration: underline;
+}

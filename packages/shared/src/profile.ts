@@ -49,6 +49,15 @@ export const scheduleSchema = z.enum(['FULL_TIME', 'PART_TIME']);
  */
 export const constraintStrengthSchema = z.enum(['ELIMINATORY', 'IMPORTANT', 'FLEXIBLE']);
 
+export const constraintKindSchema = z.enum([
+  'NO_WEEKENDS',
+  'NO_NIGHT_SHIFT',
+  'NO_ONSITE',
+  'MIN_SALARY',
+  'ONLY_REGIONS',
+  'EXCLUDED_AREA',
+]);
+
 export const constraintSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('NO_WEEKENDS'), strength: constraintStrengthSchema }),
   z.object({ kind: z.literal('NO_NIGHT_SHIFT'), strength: constraintStrengthSchema }),
