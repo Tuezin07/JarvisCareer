@@ -11,6 +11,7 @@ import {
 } from '@jarvis/shared';
 import { PrismaService } from '../../../common/prisma.service.js';
 import { ActivityService } from '../../activity/activity.service.js';
+import { BrowserService } from '../../browser/browser.service.js';
 import { JobsQueueService } from '../../jobs/jobs-queue.service.js';
 import { JobsService } from '../../jobs/jobs.service.js';
 import { ProfileService } from '../../profile/profile.service.js';
@@ -40,6 +41,7 @@ export class CareerToolsService {
     private readonly usage: UsageService,
     private readonly jobs: JobsService,
     private readonly jobsQueue: JobsQueueService,
+    private readonly browser: BrowserService,
   ) {}
 
   tools(): ToolDefinition[] {
@@ -393,10 +395,48 @@ export class CareerToolsService {
       }),
 
       defineTool({
+        name: 'inspect_job_application',
+        label: 'Abrindo a página de candidatura',
+        description:
+          'Abre a página oficial de candidatura de uma vaga num navegador isolado (JARVIS WEB) e descreve o formulário: campos, quais dá para preencher com o perfil, quais precisam do candidato, e bloqueios como CAPTCHA ou login. Só leitura: não preenche nem envia nada. Roda em segundo plano; use get_browser_session para ver o resultado.',
+        risk: 'READ_ONLY',
+        dailyLimit: 20,
+        input: jobId,
+        run: async ({ userId }, { job_id }) => {
+          const s = await this.browser.inspectJob(userId, job_id);
+          return { content: { session_id: s.id, status: s.status, capturas: s.screenshotsConsent }, summary: 'Inspeção enfileirada no navegador isolado' };
+        },
+      }),
+
+      defineTool({
+        name: 'get_browser_session',
+        label: 'Consultando o navegador',
+        description: 'Resultado de uma sessão do JARVIS WEB: status, passos executados, campos do formulário, mapeamento com o perfil e bloqueios.',
+        risk: 'READ_ONLY',
+        input: z.object({ session_id: z.string().uuid() }),
+        run: async ({ userId }, { session_id }) => {
+          const s = await this.browser.get(userId, session_id);
+          return {
+            content: {
+              status: s.status,
+              pagina: s.title,
+              url_final: s.finalUrl,
+              passos: s.steps.map((p) => `${p.action}: ${p.status} — ${p.detail}`),
+              campos: s.mapping.map((m) => ({ campo: m.label, obrigatorio: m.required, situacao: m.status, motivo: m.reason })),
+              bloqueios: s.blockers,
+              requisicoes_barradas: s.blockedRequests.length,
+              erro: s.error,
+            },
+            summary: `Sessão ${s.status.toLowerCase()}`,
+          };
+        },
+      }),
+
+      defineTool({
         name: 'pause_job_search',
         label: 'Pausando operações',
         description:
-          'Pausa a leitura automática de vagas (e, no futuro, os envios). Enquanto pausado, as empresas acompanhadas não são lidas.',
+          'Pausa todas as operações automáticas: leitura de vagas e sessões de navegador (as em andamento são interrompidas). Use quando o candidato pedir para parar.',
         risk: 'REVERSIBLE',
         input: z.object({ reason: z.string().max(300).optional() }),
         run: async ({ userId }, input) => this.setPaused(userId, true, input.reason),
@@ -466,6 +506,8 @@ export class CareerToolsService {
   }
 
   private async setPaused(userId: string, paused: boolean, reason?: string) {
+    // Parada de emergência: nada em andamento continua depois da pausa.
+    const stopped = paused ? await this.browser.cancelAllForUser(userId) : 0;
     await this.prisma.candidatePreferences.upsert({
       where: { userId },
       create: { userId, searchPaused: paused },
@@ -478,7 +520,11 @@ export class CareerToolsService {
       detail: reason ?? null,
     });
     return {
-      content: { pausado: paused, observacao: paused ? 'Leituras automáticas de vagas suspensas.' : 'Leituras automáticas retomadas.' },
+      content: {
+        pausado: paused,
+        sessoes_de_navegador_interrompidas: stopped,
+        observacao: paused ? 'Leituras de vagas e navegador suspensos.' : 'Operações automáticas retomadas.',
+      },
       summary: paused ? 'Operações pausadas' : 'Operações retomadas',
     };
   }

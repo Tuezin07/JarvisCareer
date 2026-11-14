@@ -79,7 +79,7 @@ flowchart TB
 |---|---|---|
 | `api` (HTTP) | Autenticação, CRUD, chat, decisões de permissão, SSE | Horizontal, sem estado |
 | `worker` | Trabalho de fundo determinístico ou com LLM, sem navegador | Horizontal por fila |
-| `automation` | Navegador/desktop. Um container efêmero por sessão de candidato, sem acesso ao banco: recebe um *job* assinado, devolve resultado + evidências | Por sessão, com limites de CPU/memória/tempo e política de rede |
+| `automation` | Navegador/desktop, sem acesso ao banco: recebe a tarefa pela fila `automation`, devolve resultado + evidências pela fila `automation-results` (ADR-0010). Hoje: processo separado, um contexto de navegador novo por sessão. Produção: container efêmero por sessão e tarefas assinadas | Por sessão, com limites de tempo, passos e política de rede |
 
 `api` e `worker` compartilham o mesmo código NestJS (dois *entrypoints*), o que mantém módulos, tipos e Prisma em um só lugar. `automation` é um serviço separado porque executa conteúdo não confiável.
 
@@ -164,7 +164,7 @@ JarvisCareer/
 │   │   │   └── worker.ts    processadores BullMQ (sem HTTP)
 │   │   └── test/            e2e
 │   ├── web/                 Next.js — interface cinematográfica
-│   └── automation/          (Fase 4) executor isolado de navegador/desktop
+│   └── automation/          executor isolado do JARVIS WEB (Playwright) + site de testes
 ├── packages/
 │   └── shared/              contratos Zod + tipos compartilhados API↔Web
 ├── infra/

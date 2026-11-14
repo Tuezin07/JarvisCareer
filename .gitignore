@@ -20,3 +20,6 @@ Thumbs.db
 .idea/
 storage-test/
 .claude/settings.local.json
+
+# Saída dos MCPs de desenvolvimento (snapshots, logs)
+.playwright-mcp/

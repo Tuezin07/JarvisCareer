@@ -11,6 +11,8 @@ npm run db:migrate               # prisma migrate dev (apps/api)
 npm run dev:api                  # API em http://localhost:4000/api
 npm run dev:worker               # workers BullMQ (processo separado)
 npm run dev:web                  # interface em http://localhost:3000
+npm run dev:automation           # executor do JARVIS WEB (processo isolado, Playwright)
+npm run test-site                # site de testes controlado em http://127.0.0.1:4100
 npm test                         # unitários (shared + api)
 npm run test:e2e                 # e2e contra jarvis_test (Postgres/Redis reais)
 npm run typecheck
@@ -57,6 +59,14 @@ Postgres do projeto usa a porta **5433** (a máquina tem um Postgres nativo na 5
 - `computeMatch` é puro e determinístico: informação ausente vira `questions`, nunca eliminação; toda regra nova precisa de explicação em `detail`/`met`/`unmet` e teste em `match-engine.spec.ts`.
 - Mudou perfil/preferência? Chame `JobsQueueService.enqueueMatch(userId)`.
 - Testes de vagas usam `FakeJobHttp` (`test/fixtures/job-boards.ts`) — testes nunca chamam os ATS reais. Agendamentos criados em e2e são removidos no `afterAll`.
+
+## JARVIS WEB (Fase 4) — ver ADR-0010
+
+- `apps/automation` roda TypeScript direto no Node (`--experimental-strip-types`): imports relativos terminam em `.ts`, sem parameter properties nem enums (`erasableSyntaxOnly`). Não tem acesso ao banco nem ao storage — só Redis.
+- Toda navegação passa pelo `NetworkGuard` (`policy.ts`), inclusive cada salto de redirecionamento. Nova exceção de rede só com ADR; loopback só o `host:porta` exato de `AUTOMATION_ALLOW_LOOPBACK`.
+- `mapFields` nunca inventa: regra nova precisa de motivo (`reason`) e teste em `inspect.spec.ts`; padrão visto em ATS real vira página no `test-site/server.ts` (empresa fictícia), nunca teste contra site de terceiro.
+- Nada de envio nesta fase: preenchimento só no site de testes; o resultado guardado tem passos e motivos, nunca valores.
+- Testes do executor usam Chromium real contra o site de testes (porta 4199); o e2e da API importa o executor e o site (`apps/api/tsconfig.json` tem `rootDir: ".."` e `allowImportingTsExtensions` por isso — o build usa `tsconfig.build.json`).
 
 ## MCPs de desenvolvimento
 

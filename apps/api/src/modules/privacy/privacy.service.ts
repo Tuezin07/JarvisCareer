@@ -80,6 +80,8 @@ export class PrivacyService {
         usage: { omit: { userId: true } },
         jobSources: { select: { createdAt: true, source: { select: { provider: true, boardToken: true, companyName: true } } } },
         jobMatches: { omit: { userId: true }, include: { listing: { select: { title: true, companyName: true, url: true } } } },
+        browserSessions: { omit: { userId: true } },
+        evidence: { omit: { userId: true, storageKey: true } },
       },
     });
     await this.audit.log('privacy.export', { userId, meta });

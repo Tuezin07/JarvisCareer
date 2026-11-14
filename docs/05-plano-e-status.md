@@ -29,7 +29,7 @@ Diagnóstico, arquitetura, estratégias, segurança/LGPD, custos, matriz de plat
 | Storage S3 | Planejada | ADR-0005 |
 | Interface: login, cadastro, central de comando, perfil, currículos, atividade, privacidade | Implementada | verificada manualmente no navegador (desktop 1280px e mobile 375px), build de produção OK |
 | Núcleo animado ligado ao estado real (SSE) | Implementada | verificado: idle → analyzing → completed durante upload real |
-| Testes automatizados de interface (Playwright) | Planejada | Fase 4 traz o Playwright ao projeto |
+| Testes automatizados de interface (Playwright) | Planejada | o Playwright já está no projeto (executor da Fase 4); testes da interface ainda pendentes |
 
 **Totais:** 37 testes automatizados (7 contratos, 18 unitários da API, 12 e2e com Postgres/Redis reais).
 
@@ -74,13 +74,33 @@ Diagnóstico, arquitetura, estratégias, segurança/LGPD, custos, matriz de plat
 
 **Totais:** 91 testes automatizados (7 contratos, 51 unitários, 33 e2e com Postgres/Redis reais).
 
+## Fase 4 — JARVIS WEB (2026-11-14)
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Executor isolado `apps/automation` (processo separado, sem banco/storage, filas `automation` → `automation-results`) | Testada | e2e "JARVIS WEB" roda API → fila → executor real → worker → banco |
+| Navegador Playwright/Chromium com contexto novo por sessão, sem downloads e sem service workers | Testada | testes do executor com Chromium real |
+| Política de rede: HTTPS + allowlist na navegação, bloqueio de IP privado/loopback/metadados de nuvem/DNS interno, validação de cada redirecionamento, WebSockets | Testada | unitários `NetworkGuard`; executor barra redirecionamento para `169.254.169.254` e para fora da allowlist e recursos na rede interna |
+| Detecção de CAPTCHA, login e verificação em duas etapas (sem contornar) | Testada | executor contra páginas-armadilha; **CAPTCHA detectado na página real** da Stone |
+| Inspeção de formulário de vaga real (só leitura) com mapeamento campo a campo e motivo | Testada | **verificada ao vivo** em vaga Greenhouse da Stone; regras ajustadas pelo DOM real e cobertas por página equivalente no site de testes |
+| Mapeamento sem invenção: sensíveis, documentos, senha, consentimento, salário, perguntas de escolha e sobre outra pessoa ficam com o candidato | Testada | `inspect.spec.ts` (casos de ATS real) |
+| Preenchimento só no site de testes, conferindo o valor gravado, parando antes de enviar | Testada | e2e e executor; verificado na interface |
+| Evidências com consentimento, privadas, com expiração (30 dias) e limpeza diária | Testada | e2e "sem consentimento, nenhuma captura…"; imagens verificadas na interface |
+| Sessões por candidato: uma ativa por vez, 20 por 24 h, cancelamento, pausa global para tudo | Testada | e2e "uma sessão por vez; pausa global…"; isolamento 404 |
+| Ferramentas do agente `inspect_job_application` e `get_browser_session` | Implementada | tipos e registro verificados; conversa real depende de créditos |
+| Tela Navegador (sessões, mapeamento, opções das perguntas, bloqueios, evidências, passos, requisições barradas) e botão "Inspecionar formulário" na vaga | Implementada | verificada no navegador com dados reais |
+| Provedor Browserbase no executor | Implementada | não verificada pelo executor (consome minutos da conta); MCP verificado na Fase 0 |
+| Executor adaptativo (Stagehand) | Planejada | depende de créditos de IA |
+| Container efêmero por sessão e tarefas assinadas | Planejada | Fase 9 (ADR-0010) |
+
+**Totais:** 122 testes automatizados (7 contratos, 51 unitários da API, 26 do executor com Chromium real, 38 e2e com Postgres/Redis reais e o executor de verdade).
+
 ## Próximas fases
 
 | Fase | Entrega | Depende de |
 |---|---|---|
 | 2b — Inteligência (restante) | Variantes de currículo sem invenção, carta de apresentação, extração de perfil a partir do currículo com confirmação | créditos na conta Anthropic |
-| 4 — JARVIS WEB | `apps/automation` isolado, Playwright + Stagehand, allowlist, evidências (screenshots com retenção), sessões por candidato | conta Browserbase (opcional) |
-| 5 — Candidaturas | Estados completos, modos assistido/semiautônomo/autônomo com limites, nível D por padrão | revisão de termos por plataforma |
+| 5 — Candidaturas | Estados completos, preenchimento real (inclui listas de sugestões e anexos) com aprovação por candidatura mostrando vaga, dados e respostas, modos assistido/semiautônomo/autônomo com limites, nível D por padrão | revisão de termos por plataforma |
 | 6 — JARVIS DESKTOP | VM/container com Computer Use (`computer_toolset_20260801`), Desktop Companion (Tauri, pareamento, kill switch) | ambiente de VM |
 | 7 — Voz e interface | LiveKit Agents, STT/TTS com voz original, visualizador de áudio no núcleo | contas de voz |
 | 8 — Autonomia | Job Schedulers, relatórios diário/semanal, notificações, circuit breaker | — |

@@ -6,7 +6,8 @@ import type { ConsentDto, ConsentType } from "@jarvis/shared";
 import { ErrorNote, Panel, PhaseBadge } from "@/components/hud";
 import { API_URL, ApiError, api } from "@/lib/api";
 
-const OPTIONAL: Array<{ type: ConsentType; title: string; text: string; phase: number }> = [
+// phase: null quando a funcionalidade já existe; número da fase quando ainda não.
+const OPTIONAL: Array<{ type: ConsentType; title: string; text: string; phase: number | null }> = [
   {
     type: "AUTOMATED_APPLICATIONS",
     title: "Envio automatizado de candidaturas",
@@ -16,8 +17,8 @@ const OPTIONAL: Array<{ type: ConsentType; title: string; text: string; phase: n
   {
     type: "EVIDENCE_SCREENSHOTS",
     title: "Screenshots como evidência",
-    text: "Permite guardar capturas de tela das operações no navegador como prova do que foi feito. Ficam privadas e com retenção limitada.",
-    phase: 4,
+    text: "Permite guardar capturas de tela das operações do JARVIS WEB como prova do que foi feito. Ficam privadas, só você vê, e são apagadas automaticamente ao fim do prazo de retenção (30 dias por padrão).",
+    phase: null,
   },
 ];
 
@@ -77,10 +78,12 @@ export default function PrivacyPage() {
             <li key={c.type} className="flex items-start justify-between gap-4 py-4">
               <div>
                 <p className="flex items-center gap-2 font-medium text-ink">
-                  {c.title} <PhaseBadge phase={c.phase} />
+                  {c.title} {c.phase != null && <PhaseBadge phase={c.phase} />}
                 </p>
                 <p className="mt-1 text-sm text-ink-dim">{c.text}</p>
-                <p className="mt-1 text-xs text-ink-faint">A funcionalidade ainda não existe; a autorização fica registrada para quando existir.</p>
+                {c.phase != null && (
+                  <p className="mt-1 text-xs text-ink-faint">A funcionalidade ainda não existe; a autorização fica registrada para quando existir.</p>
+                )}
               </div>
               <button
                 role="switch"

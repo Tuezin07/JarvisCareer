@@ -34,8 +34,9 @@ Substitua `COLE_A_CHAVE_AQUI` pela chave exatamente como o painel do Browserbase
 | Armazenamento de arquivos | Storage | Currículos, evidências | `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR` | 1 | Driver local implementado; driver S3 planejado |
 | Anthropic API (`@anthropic-ai/sdk` 1.8) | LLM | Chat com ferramentas, análise de currículo (computer use na Fase 6) | `ANTHROPIC_API_KEY`, `LLM_MODEL_PRIMARY`, `LLM_DAILY_BUDGET_USD` | 2 | Implementado; testado com provedor falso; chamada real chegou à API e foi recusada por **falta de créditos na conta** |
 | Greenhouse / Lever / Ashby (leitura) | APIs públicas oficiais | Descoberta de vagas por empresa | — | 3 | **Testado**; Greenhouse verificado ao vivo (Stone, 347 vagas) |
-| Playwright | Navegador | Executor determinístico | — | 4 | Planejado |
-| Stagehand / Browserbase | Navegador adaptativo/remoto | Executor adaptativo | `BROWSERBASE_API_KEY`, `BROWSERBASE_PROJECT_ID` | 4 | Planejado — requer conta |
+| Playwright 1.65 (Chromium) | Navegador | Executor determinístico do JARVIS WEB (`apps/automation`) | `BROWSER_PROVIDER=local` | 4 | **Testado** (executor real contra site de testes; inspeção real de vaga Greenhouse verificada) |
+| Browserbase (`@browserbasehq/sdk` 2.27) | Navegador remoto | Provedor alternativo do executor (CDP) | `BROWSER_PROVIDER=browserbase`, `BROWSERBASE_API_KEY`, `BROWSERBASE_PROJECT_ID` | 4 | Implementado; **não verificado pelo executor** (consome minutos da conta) — o MCP já foi verificado |
+| Stagehand | Navegador adaptativo | Executor adaptativo (`act`/`observe`/`extract`) | chave de LLM | 4 | Planejado — depende de créditos de IA |
 | LiveKit Agents + STT/TTS | Voz | Conversa por voz | a definir | 7 | Planejado |
 | E-mail transacional | Notificação | Alertas e relatórios | a definir | 8 | Planejado |
 | OpenTelemetry / Sentry | Observabilidade | Traces, erros | a definir | 9 | Planejado |

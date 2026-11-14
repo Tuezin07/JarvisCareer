@@ -8,6 +8,7 @@ import { CommonModule } from './common/common.module.js';
 import { ENV, type Env } from './config/env.js';
 import { ActivityModule } from './modules/activity/activity.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { BrowserModule } from './modules/browser/browser.module.js';
 import { DashboardController } from './modules/dashboard/dashboard.controller.js';
 import { HealthController } from './modules/health/health.controller.js';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
@@ -50,6 +51,7 @@ export const bullRoot = BullModule.forRootAsync({
     ResumesModule,
     IntelligenceModule,
     JobsModule,
+    BrowserModule,
   ],
   controllers: [HealthController, DashboardController, PrivacyController],
   providers: [

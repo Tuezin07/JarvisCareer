@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { JOB_PROVIDER_LABEL, type JobDetailDto, type JobMatchStatus } from "@jarvis/shared";
-import { Gauge } from "./hud";
+import { ApiError, api } from "@/lib/api";
+import { ErrorNote, Gauge } from "./hud";
 
 export const WORKPLACE_LABEL = { REMOTE: "Remota", HYBRID: "Híbrida", ONSITE: "Presencial", UNKNOWN: "Modalidade não informada" } as const;
 
@@ -39,7 +41,22 @@ function formatSalary(s: NonNullable<JobDetailDto["salary"]>): string {
 /** Detalhe da vaga com a explicação completa da compatibilidade. */
 export function JobDetail({ job, onStatus }: { job: JobDetailDto; onStatus: (s: JobMatchStatus) => void }) {
   const [showDescription, setShowDescription] = useState(false);
+  const [inspecting, setInspecting] = useState(false);
+  const [inspectError, setInspectError] = useState<string | null>(null);
+  const router = useRouter();
   const b = job.breakdown;
+
+  async function inspect() {
+    setInspecting(true);
+    setInspectError(null);
+    try {
+      const s = await api<{ id: string }>("/browser/inspect", { method: "POST", json: { jobId: job.id } });
+      router.push(`/navegador?session=${s.id}`);
+    } catch (err) {
+      setInspectError(err instanceof ApiError ? err.message : "Falha ao abrir o navegador.");
+      setInspecting(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -68,14 +85,22 @@ export function JobDetail({ job, onStatus }: { job: JobDetailDto; onStatus: (s: 
             ☆ Salvar
           </button>
         )}
+        <button
+          className="hud-btn hud-btn-ghost"
+          onClick={() => void inspect()}
+          disabled={inspecting}
+        >
+          {inspecting ? "Abrindo…" : "Inspecionar formulário"}
+        </button>
         {job.status !== "DISMISSED" && (
           <button className="hud-btn hud-btn-danger" onClick={() => onStatus("DISMISSED")}>
             Descartar
           </button>
         )}
       </div>
+      <ErrorNote message={inspectError} />
       <p className="text-xs text-ink-faint">
-        O JARVIS não envia candidaturas nesta fase: você se candidata na página oficial da empresa.
+        O JARVIS não envia candidaturas nesta fase: você se candidata na página oficial da empresa. “Inspecionar formulário” só lê a página.
       </p>
 
       {job.fraudRisk !== "LOW" && (
@@ -117,9 +142,7 @@ export function JobDetail({ job, onStatus }: { job: JobDetailDto; onStatus: (s: 
           ))}
         </ul>
         {b.penalties.length > 0 && (
-          <p className="mt-2 text-xs text-amber">
-            Penalidades: {b.penalties.map((p) => `${p.reason} (−${p.points})`).join("; ")}
-          </p>
+          <p className="mt-2 text-xs text-amber">Penalidades: {b.penalties.map((p) => `${p.reason} (−${p.points})`).join("; ")}</p>
         )}
       </section>
 

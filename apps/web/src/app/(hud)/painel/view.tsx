@@ -17,7 +17,7 @@ const MODULES: Array<{ name: string; status: "ok" | "planned"; phase?: number }>
   { name: "Linha do tempo ao vivo", status: "ok" },
   { name: "Conversa e análise por IA", status: "ok" },
   { name: "Pesquisa de vagas", status: "ok" },
-  { name: "JARVIS WEB (navegador)", status: "planned", phase: 4 },
+  { name: "JARVIS WEB (navegador)", status: "ok" },
   { name: "Candidaturas", status: "planned", phase: 5 },
   { name: "JARVIS DESKTOP", status: "planned", phase: 6 },
   { name: "Voz", status: "planned", phase: 7 },

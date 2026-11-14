@@ -2,7 +2,7 @@
 
 Inteligência artificial de recolocação profissional: conhece o candidato, lê seus currículos, pesquisa vagas em fontes autorizadas, calcula compatibilidade, prepara candidaturas e prova, com evidências, tudo o que fez.
 
-> Estado atual: **Fases 1 e 3 completas e núcleo da Fase 2 implementado e testado** — fundação, conversa com ferramentas, memória, análise de currículo e pesquisa de vagas em empresas acompanhadas (Greenhouse, Lever, Ashby) com compatibilidade explicável. Automação de navegador/desktop, candidaturas e voz são as próximas fases — ver [status por funcionalidade](docs/05-plano-e-status.md).
+> Estado atual: **Fases 1, 3 e 4 completas e núcleo da Fase 2 implementado e testado** — fundação, conversa com ferramentas, memória, análise de currículo, pesquisa de vagas em empresas acompanhadas (Greenhouse, Lever, Ashby) com compatibilidade explicável e JARVIS WEB (navegador isolado que inspeciona formulários oficiais, sem enviar). Envio de candidaturas, desktop e voz são as próximas fases — ver [status por funcionalidade](docs/05-plano-e-status.md).
 
 ## Requisitos
 
@@ -34,6 +34,18 @@ npm run dev:worker
 ```bash
 npm run dev:web
 ```
+
+Para o JARVIS WEB (navegador isolado), instale o Chromium do Playwright uma vez (`npx playwright install chromium`), copie `apps/automation/.env.example` para `apps/automation/.env` e rode, em mais dois terminais:
+
+```bash
+npm run dev:automation
+```
+
+```bash
+npm run test-site
+```
+
+O site de testes (http://127.0.0.1:4100) é uma empresa fictícia para provar o preenchimento sem tocar em sites reais.
 
 Acesse http://localhost:3000, crie uma conta e envie um currículo (PDF, DOCX ou TXT). Para a conversa e a análise por IA, defina `ANTHROPIC_API_KEY` em `apps/api/.env` (a conta precisa ter créditos).
 

@@ -10,6 +10,6 @@ async function bootstrap() {
     logger: env.NODE_ENV === 'production' ? new ConsoleLogger({ json: true }) : undefined,
   });
   app.enableShutdownHooks();
-  Logger.log('Workers do JARVIS ativos (filas: resume, analysis, research)', 'Worker');
+  Logger.log('Workers do JARVIS ativos (filas: resume, analysis, research, automation-results, maintenance)', 'Worker');
 }
 await bootstrap();

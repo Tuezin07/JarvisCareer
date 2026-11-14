@@ -4,7 +4,14 @@ export const QUEUES = {
   resume: 'resume',
   analysis: 'analysis',
   research: 'research',
+  /** Tarefas para o executor isolado (apps/automation). */
+  automation: 'automation',
+  /** Resultados devolvidos pelo executor. */
+  automationResults: 'automation-results',
+  maintenance: 'maintenance',
 } as const;
+
+export const automationCancelKey = (sessionId: string) => `jarvis:automation:cancel:${sessionId}`;
 
 export interface ResumeExtractJob {
   userId: string;

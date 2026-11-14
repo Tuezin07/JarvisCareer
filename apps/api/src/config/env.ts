@@ -17,6 +17,10 @@ const envSchema = z.object({
   LLM_MODEL_BULK: z.string().min(1).default('claude-opus-5-5'),
   /** Teto de gasto com LLM por candidato numa janela móvel de 24 h. */
   LLM_DAILY_BUDGET_USD: z.coerce.number().positive().default(2),
+  // Fase 4 — site de testes controlado (habilita o preenchimento de teste). Vazio em produção.
+  AUTOMATION_TEST_SITE_URL: z.string().optional().transform((v) => (v ? v.replace(/\/$/, '') : undefined)),
+  /** Dias de retenção das capturas de tela de evidência. */
+  EVIDENCE_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,4 +1,4 @@
-// JARVIS Career — modelo de dados (Fases 1 a 3).
+// JARVIS Career — modelo de dados (Fases 1 a 4).
 // Tabelas das fases seguintes (vagas, candidaturas, automação) entram com suas migrações,
 // quando o código que as usa existir. Visão completa em docs/01-arquitetura.md.
 //
@@ -30,23 +30,25 @@ model User {
   updatedAt    DateTime  @updatedAt
   lastLoginAt  DateTime?
 
-  profile       CandidateProfile?
-  preferences   CandidatePreferences?
-  experiences   Experience[]
-  education     Education[]
-  skills        CandidateSkill[]
-  resumes       Resume[]
-  refreshTokens RefreshToken[]
-  consents      Consent[]
-  events        AgentEvent[]
-  tasks         AgentTask[]
-  conversations Conversation[]
-  memories      AgentMemory[]
-  actions       ActionExecution[]
-  usage         UsageRecord[]
-  analyses      ResumeAnalysis[]
-  jobSources    UserJobSource[]
-  jobMatches    JobMatch[]
+  profile         CandidateProfile?
+  preferences     CandidatePreferences?
+  experiences     Experience[]
+  education       Education[]
+  skills          CandidateSkill[]
+  resumes         Resume[]
+  refreshTokens   RefreshToken[]
+  consents        Consent[]
+  events          AgentEvent[]
+  tasks           AgentTask[]
+  conversations   Conversation[]
+  memories        AgentMemory[]
+  actions         ActionExecution[]
+  usage           UsageRecord[]
+  analyses        ResumeAnalysis[]
+  jobSources      UserJobSource[]
+  jobMatches      JobMatch[]
+  browserSessions BrowserSession[]
+  evidence        ActionEvidence[]
 }
 
 /// Refresh token opaco. Guardamos só o hash; a família permite revogar tudo em caso de reuso.
@@ -617,4 +619,67 @@ model JobMatch {
 
   @@unique([userId, listingId])
   @@index([userId, eliminated, score])
+}
+
+// ───────────────────────────── Fase 4 — JARVIS WEB ─────────────────────────────
+
+enum BrowserTaskKind {
+  INSPECT_PAGE
+  FILL_TEST_FORM
+}
+
+enum BrowserSessionStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  WAITING_HUMAN
+  CANCELLED
+  BLOCKED
+}
+
+/// Sessão do JARVIS WEB. O navegador roda isolado em apps/automation; aqui fica o registro auditável.
+model BrowserSession {
+  id         String               @id @default(uuid()) @db.Uuid
+  userId     String               @db.Uuid
+  kind       BrowserTaskKind
+  status     BrowserSessionStatus @default(QUEUED)
+  targetUrl  String
+  finalUrl   String?
+  title      String?
+  listingId  String?              @db.Uuid
+  executor   String               @default("playwright")
+  provider   String?
+  /// Passos, campos, mapeamento, bloqueios e requisições barradas (sem valores do perfil).
+  result     Json?
+  error      String?
+  createdAt  DateTime             @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evidence ActionEvidence[]
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+}
+
+/// Evidência de uma operação (captura de tela). Só existe com consentimento e expira.
+model ActionEvidence {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  sessionId  String   @db.Uuid
+  kind       String   @default("SCREENSHOT")
+  label      String
+  storageKey String   @unique
+  mimeType   String
+  sizeBytes  Int
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session BrowserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([sessionId])
 }

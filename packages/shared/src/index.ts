@@ -5,3 +5,4 @@ export * from './resume.js';
 export * from './privacy.js';
 export * from './intelligence.js';
 export * from './jobs.js';
+export * from './browser.js';
