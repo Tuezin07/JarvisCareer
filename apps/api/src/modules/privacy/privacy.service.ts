@@ -78,6 +78,8 @@ export class PrivacyService {
         analyses: { omit: { userId: true } },
         actions: { omit: { userId: true } },
         usage: { omit: { userId: true } },
+        jobSources: { select: { createdAt: true, source: { select: { provider: true, boardToken: true, companyName: true } } } },
+        jobMatches: { omit: { userId: true }, include: { listing: { select: { title: true, companyName: true, url: true } } } },
       },
     });
     await this.audit.log('privacy.export', { userId, meta });

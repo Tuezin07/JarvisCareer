@@ -16,7 +16,7 @@ const MODULES: Array<{ name: string; status: "ok" | "planned"; phase?: number }>
   { name: "Leitura de currículos", status: "ok" },
   { name: "Linha do tempo ao vivo", status: "ok" },
   { name: "Conversa e análise por IA", status: "ok" },
-  { name: "Pesquisa de vagas", status: "planned", phase: 3 },
+  { name: "Pesquisa de vagas", status: "ok" },
   { name: "JARVIS WEB (navegador)", status: "planned", phase: 4 },
   { name: "Candidaturas", status: "planned", phase: 5 },
   { name: "JARVIS DESKTOP", status: "planned", phase: 6 },
@@ -78,7 +78,7 @@ export default function CommandCenter() {
         <Panel title="Operações" code="OPS-24">
           <div className="grid grid-cols-2 gap-4">
             <Stat label="Eventos 24h" value={summary?.events24h ?? "—"} />
-            <Stat label="Vagas" value={<PhaseBadge phase={3} />} hint="ainda não pesquisa" />
+            <Stat label="Vagas compatíveis" value={summary?.jobsFound ?? "—"} hint="empresas acompanhadas" />
             <Stat label="Candidaturas" value={<PhaseBadge phase={5} />} hint="ainda não envia" />
           </div>
         </Panel>

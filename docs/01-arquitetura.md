@@ -184,7 +184,7 @@ O schema completo está em [`apps/api/prisma/schema.prisma`](../apps/api/prisma/
 | Perfil | `CandidateProfile`, `CandidatePreferences`, `Experience`, `Education`, `Certification`, `Skill`, `CandidateSkill`, `Language` | 1 |
 | Currículos | `Resume`, `ResumeVersion`, `ResumeAnalysis` | 1–2 |
 | Agente | `Conversation`, `Message`, `AgentMemory`, `AgentTask`, `AgentEvent`, `UsageRecord` | 1–2 |
-| Vagas | `JobSource`, `JobListing`, `JobMatch` | 3 |
+| Vagas | `JobSource`, `UserJobSource`, `JobListing`, `JobMatch` | 3 (implementado) |
 | Candidaturas | `Application`, `ApplicationEvent`, `ApplicationAnswer` | 5 |
 | Automação | `ActionPermission`, `ActionExecution`, `ActionEvidence`, `BrowserSession`, `DesktopSession`, `DeviceAuthorization` | 4–6 |
 | Comunicação | `Notification`, `Report` | 8 |

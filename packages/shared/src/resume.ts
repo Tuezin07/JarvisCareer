@@ -33,5 +33,6 @@ export interface DashboardSummary {
   events24h: number;
   /** Funcionalidades ainda não implementadas retornam null, nunca zero inventado. */
   applications: null;
-  jobsFound: null;
+  /** Vagas abertas compatíveis (não eliminadas) nas empresas acompanhadas. */
+  jobsFound: number;
 }

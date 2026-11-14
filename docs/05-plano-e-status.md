@@ -54,12 +54,31 @@ Diagnóstico, arquitetura, estratégias, segurança/LGPD, custos, matriz de plat
 
 **Totais:** 55 testes automatizados (7 contratos, 25 unitários, 23 e2e com Postgres/Redis reais).
 
+## Fase 3 — Pesquisa de vagas (2026-11-12)
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Conectores de leitura Greenhouse, Lever e Ashby (APIs públicas oficiais, allowlist de hosts) | Testada | unitários com respostas no formato real; **verificado ao vivo** com a página pública da Stone (Greenhouse, 347 vagas) |
+| Acompanhar empresa por link; importar vaga específica por link | Testada | e2e "acompanha uma empresa…", "importa uma vaga específica…"; links de LinkedIn/Gupy recusados |
+| Sincronização no worker: agendada a cada 6 h, sob demanda, trava por empresa, encerramento de vagas que somem, circuit breaker | Testada | e2e "vaga que some da página é encerrada…"; respeita pausa (e2e "com as operações pausadas…") |
+| Normalização e deduplicação (hash de conteúdo; chave empresa+cargo+local) | Testada | unitários de `contentHash`/`dedupKey` |
+| Motor de compatibilidade determinístico, 7 critérios, pesos configuráveis, restrições eliminatórias/importantes/flexíveis, perguntas para dados ausentes | Testada | 15 unitários do motor; e2e "mudança de preferências recalcula…" |
+| Recálculo automático quando perfil/preferências mudam | Testada | e2e |
+| Sinais de fraude com evidência | Testada | unitários `detectFraudSignals` |
+| Ferramentas do agente: `search_jobs`, `get_job_details`, `compare_jobs`, `list_job_sources`, `follow_company_jobs`, `refresh_job_search`, `set_job_status` | Testada (via provedor falso) | e2e "search_jobs devolve vagas reais…" |
+| Tela de Vagas (empresas, filtros, lista, detalhe com explicação, salvar/descartar, link oficial) | Implementada | verificada no navegador com dados reais |
+| Isolamento: lista e detalhe por candidato; fonte compartilhada, compatibilidade não | Testada | e2e "cada candidato tem sua própria lista…" |
+| Portais sem API autorizada (LinkedIn, Gupy, Catho, Indeed…) | Fora do escopo | matriz de plataformas (nível D/E) |
+| Análise semântica da vaga por IA (complementar à nota) | Planejada | depende de créditos na conta Anthropic |
+| UI para editar os pesos da compatibilidade | Planejada | API e armazenamento prontos (`matchWeights`) |
+
+**Totais:** 90 testes automatizados (7 contratos, 51 unitários, 32 e2e com Postgres/Redis reais).
+
 ## Próximas fases
 
 | Fase | Entrega | Depende de |
 |---|---|---|
 | 2b — Inteligência (restante) | Variantes de currículo sem invenção, carta de apresentação, extração de perfil a partir do currículo com confirmação | créditos na conta Anthropic |
-| 3 — Pesquisa | Conectores oficiais Greenhouse/Lever/Ashby (leitura), normalização, deduplicação, motor de compatibilidade com pesos configuráveis, detecção de fraude, vaga por link colado | lista de empresas/board tokens |
 | 4 — JARVIS WEB | `apps/automation` isolado, Playwright + Stagehand, allowlist, evidências (screenshots com retenção), sessões por candidato | conta Browserbase (opcional) |
 | 5 — Candidaturas | Estados completos, modos assistido/semiautônomo/autônomo com limites, nível D por padrão | revisão de termos por plataforma |
 | 6 — JARVIS DESKTOP | VM/container com Computer Use (`computer_toolset_20260801`), Desktop Companion (Tauri, pareamento, kill switch) | ambiente de VM |

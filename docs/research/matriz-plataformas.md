@@ -33,6 +33,10 @@ Os três ATS internacionais verificados (Greenhouse, Lever, Ashby) **expõem vag
 | **Sólides** | API de produto para empresas | — | **D/E** | A validar | — |
 | **Pandapé** | Sem API pública de candidato conhecida | — | **D/E** | A validar | — |
 
+## Estado da implementação (2026-11-12)
+
+Leitura de vagas de Greenhouse, Lever e Ashby **implementada** (`apps/api/src/modules/jobs/connectors/`), verificada com dados reais e coberta por testes. Envio continua nível D para todos. Ver ADR-0009.
+
 ## Consequências para a arquitetura
 
 1. **Conectores de leitura** (Fase 3) começam por Greenhouse, Lever e Ashby: APIs oficiais, públicas e estáveis. O usuário (ou uma lista curada) informa os *board tokens* das empresas de interesse.

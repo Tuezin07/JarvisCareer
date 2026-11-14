@@ -9,6 +9,7 @@ import type {
 } from '@jarvis/shared';
 import { AuditService, type RequestMeta } from '../../common/audit.service.js';
 import { PrismaService } from '../../common/prisma.service.js';
+import { JobsQueueService } from '../jobs/jobs-queue.service.js';
 
 const normalizeSkill = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
 
@@ -17,6 +18,7 @@ export class ProfileService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly jobsQueue: JobsQueueService,
   ) {}
 
   async get(userId: string) {
@@ -71,6 +73,7 @@ export class ProfileService {
     };
     await this.prisma.candidateProfile.upsert({ where: { userId }, create: { userId, ...data }, update: data });
     await this.audit.log('profile.update', { userId, meta });
+    await this.jobsQueue.enqueueMatch(userId);
     return this.get(userId);
   }
 
@@ -86,6 +89,7 @@ export class ProfileService {
     };
     await this.prisma.candidatePreferences.upsert({ where: { userId }, create: { userId, ...data }, update: data });
     await this.audit.log('preferences.update', { userId, meta });
+    await this.jobsQueue.enqueueMatch(userId);
     return this.get(userId);
   }
 
@@ -107,6 +111,7 @@ export class ProfileService {
       }),
     ]);
     await this.audit.log('profile.experiences.update', { userId, meta, metadata: { count: items.length } });
+    await this.jobsQueue.enqueueMatch(userId);
     return this.get(userId);
   }
 
@@ -127,6 +132,7 @@ export class ProfileService {
       }),
     ]);
     await this.audit.log('profile.education.update', { userId, meta, metadata: { count: items.length } });
+    await this.jobsQueue.enqueueMatch(userId);
     return this.get(userId);
   }
 
@@ -146,6 +152,7 @@ export class ProfileService {
       }
     });
     await this.audit.log('profile.skills.update', { userId, meta, metadata: { count: unique.size } });
+    await this.jobsQueue.enqueueMatch(userId);
     return this.get(userId);
   }
 }

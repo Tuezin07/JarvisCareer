@@ -2,7 +2,7 @@
 
 Inteligência artificial de recolocação profissional: conhece o candidato, lê seus currículos, pesquisa vagas em fontes autorizadas, calcula compatibilidade, prepara candidaturas e prova, com evidências, tudo o que fez.
 
-> Estado atual: **Fase 1 (fundação) e núcleo da Fase 2 (conversa com ferramentas, memória, análise de currículo) implementados e testados.** Pesquisa de vagas, automação de navegador/desktop, candidaturas e voz são as próximas fases — ver [status por funcionalidade](docs/05-plano-e-status.md).
+> Estado atual: **Fases 1 e 3 completas e núcleo da Fase 2 implementado e testado** — fundação, conversa com ferramentas, memória, análise de currículo e pesquisa de vagas em empresas acompanhadas (Greenhouse, Lever, Ashby) com compatibilidade explicável. Automação de navegador/desktop, candidaturas e voz são as próximas fases — ver [status por funcionalidade](docs/05-plano-e-status.md).
 
 ## Requisitos
 

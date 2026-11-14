@@ -13,8 +13,8 @@ let prisma: PrismaService;
 const llm = new FakeLlmProvider();
 
 beforeAll(async () => {
-  app = await createApi(llm);
-  worker = await createWorker(llm);
+  app = await createApi({ llm });
+  worker = await createWorker({ llm });
   prisma = app.get(PrismaService);
 });
 
@@ -99,11 +99,11 @@ describe('conversa com ferramentas', () => {
     const { agent } = await registerCandidate(app);
     const conversationId = await newConversation(agent);
     llm.script(
-      fakeMessage([toolUse('get_activity_history', { hours: 99999 }), toolUse('search_jobs', { query: 'suporte' })], 'tool_use'),
-      fakeMessage([text('Não consegui. A pesquisa de vagas ainda não existe.')], 'end_turn'),
+      fakeMessage([toolUse('get_activity_history', { hours: 99999 }), toolUse('submit_application', { job_id: 'x' })], 'tool_use'),
+      fakeMessage([text('Não consigo enviar candidaturas ainda.')], 'end_turn'),
     );
     const n = llm.turnRequests.length;
-    const events = await say(agent, conversationId, 'Procure vagas de suporte em Curitiba');
+    const events = await say(agent, conversationId, 'Envie meu currículo para essa vaga');
 
     const finals = events.filter((e) => e.type === 'tool' && e.activity.status !== 'running');
     expect(finals.map((e) => e.type === 'tool' && e.activity.status)).toEqual(['failed', 'failed']);

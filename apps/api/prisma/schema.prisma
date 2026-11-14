@@ -1,4 +1,4 @@
-// JARVIS Career — modelo de dados (Fases 1 e 2).
+// JARVIS Career — modelo de dados (Fases 1 a 3).
 // Tabelas das fases seguintes (vagas, candidaturas, automação) entram com suas migrações,
 // quando o código que as usa existir. Visão completa em docs/01-arquitetura.md.
 //
@@ -45,6 +45,8 @@ model User {
   actions       ActionExecution[]
   usage         UsageRecord[]
   analyses      ResumeAnalysis[]
+  jobSources    UserJobSource[]
+  jobMatches    JobMatch[]
 }
 
 /// Refresh token opaco. Guardamos só o hash; a família permite revogar tudo em caso de reuso.
@@ -114,6 +116,8 @@ model CandidatePreferences {
   constraints         Json           @default("[]")
   /// Pausa global de buscas e envios automáticos deste candidato.
   searchPaused        Boolean        @default(false)
+  /// Pesos do motor de compatibilidade (null = padrão público em @jarvis/shared).
+  matchWeights        Json?
   updatedAt           DateTime       @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -484,4 +488,133 @@ model ResumeAnalysis {
 
   @@index([resumeId, createdAt])
   @@index([userId, createdAt])
+}
+
+// ───────────────────────────── Fase 3 — Pesquisa de vagas ─────────────────────────────
+
+enum JobProvider {
+  GREENHOUSE
+  LEVER
+  ASHBY
+}
+
+enum JobSourceStatus {
+  ACTIVE
+  /// Falhas consecutivas; volta a ACTIVE no próximo sucesso.
+  FAILING
+  /// Desligada após falhas demais (circuit breaker) ou por não ter seguidores.
+  DISABLED
+}
+
+/// Página pública de vagas de uma empresa num ATS. Dado público, compartilhado entre candidatos.
+model JobSource {
+  id                  String          @id @default(uuid()) @db.Uuid
+  provider            JobProvider
+  boardToken          String
+  /// "eu" para o Lever europeu; null no padrão.
+  region              String?
+  companyName         String
+  careersUrl          String
+  status              JobSourceStatus @default(ACTIVE)
+  consecutiveFailures Int             @default(0)
+  lastSyncedAt        DateTime?
+  lastError           String?
+  openJobCount        Int?
+  createdAt           DateTime        @default(now())
+
+  followers UserJobSource[]
+  listings  JobListing[]
+
+  @@unique([provider, boardToken])
+}
+
+model UserJobSource {
+  userId    String   @db.Uuid
+  sourceId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source JobSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sourceId])
+  @@index([sourceId])
+}
+
+enum WorkplaceType {
+  REMOTE
+  HYBRID
+  ONSITE
+  UNKNOWN
+}
+
+enum FraudRisk {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+/// Vaga normalizada. Vagas que somem da página de origem ganham closedAt (não são apagadas).
+model JobListing {
+  id             String        @id @default(uuid()) @db.Uuid
+  sourceId       String        @db.Uuid
+  externalId     String
+  title          String
+  companyName    String
+  department     String?
+  locations      String[]
+  workplaceType  WorkplaceType @default(UNKNOWN)
+  employmentType String?
+  description    String
+  url            String
+  applyUrl       String?
+  language       String?
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String?
+  /// YEAR, MONTH ou HOUR, como publicado.
+  salaryPeriod   String?
+  publishedAt    DateTime?
+  firstSeenAt    DateTime      @default(now())
+  lastSeenAt     DateTime      @default(now())
+  closedAt       DateTime?
+  /// Hash do conteúdo normalizado: mudou, recalcula compatibilidade.
+  contentHash    String        @db.Char(64)
+  /// Empresa+cargo+local normalizados, para agrupar a mesma vaga publicada em lugares diferentes.
+  dedupKey       String
+  fraudRisk      FraudRisk     @default(LOW)
+  fraudSignals   Json          @default("[]")
+
+  source  JobSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  matches JobMatch[]
+
+  @@unique([sourceId, externalId])
+  @@index([dedupKey])
+  @@index([sourceId, closedAt])
+}
+
+enum JobMatchStatus {
+  NEW
+  SAVED
+  DISMISSED
+}
+
+/// Compatibilidade de uma vaga com um candidato (motor determinístico, pesos públicos).
+model JobMatch {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @db.Uuid
+  listingId   String         @db.Uuid
+  score       Int
+  eliminated  Boolean        @default(false)
+  breakdown   Json
+  status      JobMatchStatus @default(NEW)
+  /// contentHash da vaga usado no cálculo.
+  listingHash String         @db.Char(64)
+  computedAt  DateTime       @default(now())
+
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing JobListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId, eliminated, score])
 }

@@ -1,7 +1,8 @@
 import { type INestApplication, type INestApplicationContext, Logger } from '@nestjs/common';
 import { LLM_PROVIDER, type LlmProvider } from '../src/modules/intelligence/llm/llm-provider.js';
+import { JOB_HTTP, type JobHttp } from '../src/modules/jobs/connectors/job-http.js';
 import { NestFactory } from '@nestjs/core';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import type TestAgent from 'supertest/lib/agent.js';
@@ -10,20 +11,31 @@ import { configureApp } from '../src/bootstrap.js';
 import { loadEnv } from '../src/config/env.js';
 import { WorkerModule } from '../src/worker.module.js';
 
-export async function createApi(llm?: LlmProvider): Promise<INestApplication> {
-  let builder = Test.createTestingModule({ imports: [AppModule] });
-  if (llm) builder = builder.overrideProvider(LLM_PROVIDER).useValue(llm);
-  const app = (await builder.compile()).createNestApplication({ logger: false });
+/** Substitutos de dependências externas: modelo de linguagem e HTTP dos conectores de vagas. */
+export interface Fakes {
+  llm?: LlmProvider;
+  jobHttp?: JobHttp;
+}
+
+function applyFakes(builder: TestingModuleBuilder, fakes: Fakes): TestingModuleBuilder {
+  let b = builder;
+  if (fakes.llm) b = b.overrideProvider(LLM_PROVIDER).useValue(fakes.llm);
+  if (fakes.jobHttp) b = b.overrideProvider(JOB_HTTP).useValue(fakes.jobHttp);
+  return b;
+}
+
+export async function createApi(fakes: Fakes = {}): Promise<INestApplication> {
+  const app = (await applyFakes(Test.createTestingModule({ imports: [AppModule] }), fakes).compile()).createNestApplication({
+    logger: false,
+  });
   configureApp(app, loadEnv());
   await app.init();
   return app;
 }
 
-export async function createWorker(llm?: LlmProvider): Promise<INestApplicationContext> {
-  if (!llm) return NestFactory.createApplicationContext(WorkerModule, { logger: false });
-  const moduleRef = await Test.createTestingModule({ imports: [WorkerModule] })
-    .overrideProvider(LLM_PROVIDER)
-    .useValue(llm)
+export async function createWorker(fakes: Fakes = {}): Promise<INestApplicationContext> {
+  if (!fakes.llm && !fakes.jobHttp) return NestFactory.createApplicationContext(WorkerModule, { logger: false });
+  const moduleRef = await applyFakes(Test.createTestingModule({ imports: [WorkerModule] }), fakes)
     .setLogger(new Logger())
     .compile();
   moduleRef.useLogger(false);

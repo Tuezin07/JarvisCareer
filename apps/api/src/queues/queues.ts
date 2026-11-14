@@ -3,6 +3,7 @@ import type { DefaultJobOptions } from 'bullmq';
 export const QUEUES = {
   resume: 'resume',
   analysis: 'analysis',
+  research: 'research',
 } as const;
 
 export interface ResumeExtractJob {
@@ -10,6 +11,22 @@ export interface ResumeExtractJob {
   resumeId: string;
   taskId: string;
 }
+
+/** Fila research: 'source.sync' lê uma página de vagas; 'match.user' recalcula a compatibilidade de um candidato. */
+export interface SourceSyncJob {
+  sourceId: string;
+  /** Importação de uma vaga específica por link: cria o match mesmo sem acompanhar a empresa. */
+  importForUser?: { userId: string; externalId: string };
+}
+
+export interface MatchUserJob {
+  userId: string;
+}
+
+export type ResearchJob = SourceSyncJob | MatchUserJob;
+
+export const SOURCE_SYNC_EVERY_MS = 6 * 3600 * 1000;
+export const sourceSchedulerId = (sourceId: string) => `source-sync-${sourceId}`;
 
 export interface ResumeAnalysisJob {
   userId: string;

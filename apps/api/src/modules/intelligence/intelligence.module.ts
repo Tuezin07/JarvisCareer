@@ -2,6 +2,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { DEFAULT_JOB_OPTIONS, QUEUES } from '../../queues/queues.js';
 import { ActivityCoreModule, ActivityModule } from '../activity/activity.module.js';
+import { JobsQueueModule } from '../jobs/jobs-queue.module.js';
+import { JobsModule } from '../jobs/jobs.module.js';
 import { ProfileModule } from '../profile/profile.module.js';
 import { ResumeAnalysisProcessor } from './analysis/resume-analysis.processor.js';
 import { ResumeAnalysisService } from './analysis/resume-analysis.service.js';
@@ -17,7 +19,7 @@ const analysisQueue = BullModule.registerQueue({ name: QUEUES.analysis, defaultJ
 
 /** JARVIS Intelligence Core — HTTP: conversa, ferramentas e solicitação de análises. */
 @Module({
-  imports: [analysisQueue, LlmModule, ActivityModule, ProfileModule],
+  imports: [analysisQueue, LlmModule, ActivityModule, ProfileModule, JobsModule, JobsQueueModule],
   controllers: [ConversationsController, IntelligenceController],
   providers: [CareerToolsService, ActionRouter, ConversationsService, ChatService, ResumeAnalysisService],
 })

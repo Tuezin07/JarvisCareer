@@ -50,6 +50,14 @@ Postgres do projeto usa a porta **5433** (a máquina tem um Postgres nativo na 5
 - Opus 5.5: não envie `thinking: disabled`, `budget_tokens` nem `tool_choice` forçado (400). Profundidade por `output_config.effort`.
 - Erros para o candidato passam por `publicLlmErrorMessage()`; nunca exponha o corpo de erro do provedor.
 
+## Pesquisa de vagas (Fase 3) — ver ADR-0009
+
+- Conectores em `modules/jobs/connectors/`: só leitura, só via `JOB_HTTP` (allowlist em `ALLOWED_HOSTS`). Novo ATS = novo conector + host na allowlist + linha na matriz de plataformas, nunca scraping de portal sem API autorizada.
+- Rede só no worker (`SyncService`); a API só valida o link (`board()`) ao acompanhar.
+- `computeMatch` é puro e determinístico: informação ausente vira `questions`, nunca eliminação; toda regra nova precisa de explicação em `detail`/`met`/`unmet` e teste em `match-engine.spec.ts`.
+- Mudou perfil/preferência? Chame `JobsQueueService.enqueueMatch(userId)`.
+- Testes de vagas usam `FakeJobHttp` (`test/fixtures/job-boards.ts`) — testes nunca chamam os ATS reais. Agendamentos criados em e2e são removidos no `afterAll`.
+
 ## MCPs de desenvolvimento
 
 `.mcp.json` (escopo de projeto): `playwright` (`@playwright/mcp`) e `browserbase` (HTTP, lê `BROWSERBASE_API_KEY` do ambiente). São ferramentas do Claude Code, **não** do produto — capacidades do JARVIS em produção são implementadas no backend com contrato, permissão e testes ([docs/integracoes.md](docs/integracoes.md)).
