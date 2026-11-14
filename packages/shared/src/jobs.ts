@@ -22,6 +22,10 @@ export const matchWeightsSchema = z
   .object(Object.fromEntries(MATCH_CRITERIA.map((c) => [c.key, z.number().int().min(0).max(100)])) as Record<MatchCriterionKey, z.ZodNumber>)
   .refine((w) => Object.values(w).reduce((a, b) => a + b, 0) === 100, 'Os pesos precisam somar 100');
 
+/** null volta aos pesos padrão. */
+export const matchWeightsInputSchema = z.object({ weights: matchWeightsSchema.nullable() });
+export type MatchWeightsInput = z.infer<typeof matchWeightsInputSchema>;
+
 export interface MatchCriterionResult {
   key: MatchCriterionKey;
   label: string;

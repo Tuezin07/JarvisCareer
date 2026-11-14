@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import {
   BRAZIL_UFS,
+  DEFAULT_MATCH_WEIGHTS,
+  MATCH_CRITERIA,
   type Constraint,
   type EducationInput,
   type ExperienceInput,
+  type MatchWeights,
   type SkillInput,
 } from "@jarvis/shared";
 import { ChipGroup, Field, SaveBar, TagInput } from "@/components/form";
@@ -37,6 +40,7 @@ interface ProfileResponse {
     firstJob: boolean;
     acceptsNoExperience: boolean;
     constraints: Constraint[];
+    matchWeights: MatchWeights | null;
   } | null;
   experiences: Array<ExperienceInput & { id: string }>;
   education: Array<EducationInput & { id: string }>;
@@ -108,6 +112,7 @@ export default function ProfilePage() {
       <SkillsSection initial={data.skills} />
       <ExperienceSection initial={data.experiences} />
       <EducationSection initial={data.education} />
+      <WeightsSection initial={data.preferences?.matchWeights ?? null} />
     </div>
   );
 }
@@ -482,6 +487,70 @@ function EducationSection({ initial }: { initial: ProfileResponse["education"] }
       </div>
       <ErrorNote message={s.error} />
       <SaveBar saving={s.saving} saved={s.saved} onSave={() => s.run(() => api("/profile/education", { method: "PUT", json: { items } }))} />
+    </Panel>
+  );
+}
+
+/** Pesos do motor de compatibilidade. Precisam somar 100; o padrão é público e documentado. */
+function WeightsSection({ initial }: { initial: MatchWeights | null }) {
+  const [weights, setWeights] = useState<MatchWeights>(initial ?? DEFAULT_MATCH_WEIGHTS);
+  const s = useSection();
+  const total = Object.values(weights).reduce((a, b) => a + b, 0);
+  const isDefault = MATCH_CRITERIA.every((c) => weights[c.key] === c.defaultWeight);
+
+  return (
+    <Panel title="Pesos da compatibilidade" code="PRF-WGT">
+      <p className="mb-4 text-sm text-ink-dim">
+        Quanto cada critério pesa na nota das vagas. Ajuste para refletir o que importa para você; as notas são recalculadas ao salvar.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {MATCH_CRITERIA.map((c) => (
+          <label key={c.key} className="block">
+            <span className="flex items-baseline justify-between text-sm">
+              <span className="text-ink">{c.label}</span>
+              <span className="font-mono text-ink-dim">
+                {weights[c.key]}% <span className="text-ink-faint">(padrão {c.defaultWeight})</span>
+              </span>
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={60}
+              step={5}
+              value={weights[c.key]}
+              onChange={(e) => setWeights((w) => ({ ...w, [c.key]: Number(e.target.value) }))}
+              className="mt-2 w-full accent-cyan"
+              aria-label={`Peso de ${c.label}`}
+            />
+          </label>
+        ))}
+      </div>
+      <p className={`mt-4 font-mono text-sm ${total === 100 ? "text-green" : "text-amber"}`} role="status">
+        Soma: {total}% {total === 100 ? "" : `— precisa ser 100 (${total > 100 ? "tire" : "faltam"} ${Math.abs(100 - total)})`}
+      </p>
+      <ErrorNote message={s.error} />
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
+        {s.saved && <span className="font-mono text-xs text-green">Salvo · recalculando vagas</span>}
+        <button
+          type="button"
+          className="hud-btn hud-btn-ghost"
+          disabled={s.saving || isDefault}
+          onClick={() => {
+            setWeights(DEFAULT_MATCH_WEIGHTS);
+            void s.run(() => api("/profile/match-weights", { method: "PUT", json: { weights: null } }));
+          }}
+        >
+          Restaurar padrão
+        </button>
+        <button
+          type="button"
+          className="hud-btn"
+          disabled={s.saving || total !== 100}
+          onClick={() => s.run(() => api("/profile/match-weights", { method: "PUT", json: { weights } }))}
+        >
+          {s.saving ? "Salvando…" : "Salvar pesos"}
+        </button>
+      </div>
     </Panel>
   );
 }

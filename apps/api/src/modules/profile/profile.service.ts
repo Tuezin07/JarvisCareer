@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type {
   Constraint,
+  MatchWeights,
   EducationInput,
   ExperienceInput,
   PreferencesInput,
@@ -9,6 +10,7 @@ import type {
 } from '@jarvis/shared';
 import { AuditService, type RequestMeta } from '../../common/audit.service.js';
 import { PrismaService } from '../../common/prisma.service.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { JobsQueueService } from '../jobs/jobs-queue.service.js';
 
 const normalizeSkill = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -52,6 +54,7 @@ export class ProfileService {
         acceptsNoExperience: preferences.acceptsNoExperience,
         constraints: preferences.constraints as Constraint[],
         searchPaused: preferences.searchPaused,
+        matchWeights: (preferences.matchWeights as MatchWeights | null) ?? null,
       },
       experiences: experiences.map(({ userId: _u, position: _p, ...e }) => e),
       education: education.map(({ userId: _u, position: _p, ...e }) => e),
@@ -73,6 +76,19 @@ export class ProfileService {
     };
     await this.prisma.candidateProfile.upsert({ where: { userId }, create: { userId, ...data }, update: data });
     await this.audit.log('profile.update', { userId, meta });
+    await this.jobsQueue.enqueueMatch(userId);
+    return this.get(userId);
+  }
+
+  /** Pesos da compatibilidade (validados para somar 100); null restaura o padrão público. */
+  async updateMatchWeights(userId: string, weights: MatchWeights | null, meta: RequestMeta) {
+    const value = weights ?? Prisma.DbNull;
+    await this.prisma.candidatePreferences.upsert({
+      where: { userId },
+      create: { userId, matchWeights: value },
+      update: { matchWeights: value },
+    });
+    await this.audit.log('preferences.match_weights.update', { userId, meta, metadata: { reset: weights === null } });
     await this.jobsQueue.enqueueMatch(userId);
     return this.get(userId);
   }

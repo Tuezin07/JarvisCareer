@@ -4,6 +4,8 @@ import type { z } from 'zod';
 import {
   educationListSchema,
   experiencesSchema,
+  matchWeightsInputSchema,
+  type MatchWeightsInput,
   preferencesSchema,
   profileSchema,
   skillsSchema,
@@ -35,6 +37,15 @@ export class ProfileController {
     @Req() req: Request,
   ) {
     return this.profile.updatePreferences(user.id, body, requestMeta(req));
+  }
+
+  @Put('match-weights')
+  matchWeights(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: matchWeightsInputSchema }) body: MatchWeightsInput,
+    @Req() req: Request,
+  ) {
+    return this.profile.updateMatchWeights(user.id, body.weights, requestMeta(req));
   }
 
   @Put('experiences')

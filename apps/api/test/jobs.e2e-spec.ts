@@ -150,6 +150,35 @@ describe('pesquisa de vagas', () => {
     expect(support.topReasons[0]).toContain('abaixo do mínimo');
   });
 
+  it('pesos personalizados recalculam a nota; soma diferente de 100 é recusada; null restaura o padrão', async () => {
+    const { agent } = await registerCandidate(app);
+    await profileForSupport(agent);
+    await follow(agent);
+    const before = await waitJobs(agent, 3);
+    const supportId = before.items.find((j) => j.title === 'Analista de Suporte Técnico Júnior')!.id;
+    const defaultScore = ((await agent.get(`/api/jobs/${supportId}`).expect(200)).body as JobDetailDto).score;
+
+    const bad = { skills: 50, experience: 50, role: 50, seniority: 0, location: 0, education: 0, compensation: 0 };
+    await agent.put('/api/profile/match-weights').send({ weights: bad }).expect(400);
+
+    const onlySkills = { skills: 100, experience: 0, role: 0, seniority: 0, location: 0, education: 0, compensation: 0 };
+    const saved = await agent.put('/api/profile/match-weights').send({ weights: onlySkills }).expect(200);
+    expect(saved.body.preferences.matchWeights).toEqual(onlySkills);
+    const custom = await waitFor(async () => {
+      const d = (await agent.get(`/api/jobs/${supportId}`).expect(200)).body as JobDetailDto;
+      return d.breakdown.criteria.find((c) => c.key === 'skills')?.weight === 100 ? d : undefined;
+    });
+    expect(custom.score).toBe(custom.breakdown.criteria.find((c) => c.key === 'skills')!.score);
+
+    const reset = await agent.put('/api/profile/match-weights').send({ weights: null }).expect(200);
+    expect(reset.body.preferences.matchWeights).toBeNull();
+    const back = await waitFor(async () => {
+      const d = (await agent.get(`/api/jobs/${supportId}`).expect(200)).body as JobDetailDto;
+      return d.breakdown.criteria.find((c) => c.key === 'skills')?.weight === 30 ? d : undefined;
+    });
+    expect(back.score).toBe(defaultScore);
+  });
+
   it('cada candidato tem sua própria lista; detalhe de vaga alheia responde 404', async () => {
     const a = await registerCandidate(app);
     const b = await registerCandidate(app);

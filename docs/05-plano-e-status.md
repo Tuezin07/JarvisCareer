@@ -70,9 +70,9 @@ Diagnóstico, arquitetura, estratégias, segurança/LGPD, custos, matriz de plat
 | Isolamento: lista e detalhe por candidato; fonte compartilhada, compatibilidade não | Testada | e2e "cada candidato tem sua própria lista…" |
 | Portais sem API autorizada (LinkedIn, Gupy, Catho, Indeed…) | Fora do escopo | matriz de plataformas (nível D/E) |
 | Análise semântica da vaga por IA (complementar à nota) | Planejada | depende de créditos na conta Anthropic |
-| UI para editar os pesos da compatibilidade | Planejada | API e armazenamento prontos (`matchWeights`) |
+| Pesos da compatibilidade editáveis pelo candidato (soma 100, restaurar padrão, recálculo automático) | Testada | e2e "pesos personalizados recalculam a nota…"; seção no Perfil verificada no navegador |
 
-**Totais:** 90 testes automatizados (7 contratos, 51 unitários, 32 e2e com Postgres/Redis reais).
+**Totais:** 91 testes automatizados (7 contratos, 51 unitários, 33 e2e com Postgres/Redis reais).
 
 ## Próximas fases
 
